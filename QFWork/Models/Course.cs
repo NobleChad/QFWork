@@ -1,6 +1,6 @@
 ﻿
 
-namespace Qualification_Work.Models
+namespace QFWork.Models
 {
     public class Course
     {

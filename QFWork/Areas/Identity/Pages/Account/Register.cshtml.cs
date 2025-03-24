@@ -13,7 +13,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Text;
 using System.Text.Encodings.Web;
 
-namespace Qualification_Work.Areas.Identity.Pages.Account
+namespace QFWork.Areas.Identity.Pages.Account
 {
     public class RegisterModel : PageModel
     {

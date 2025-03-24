@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using QFWork.Data;
 
-namespace Qualification_Work.Controllers;
+namespace QFWork.Controllers;
 
 [Authorize]
 public class HomeController : Controller
