@@ -1,0 +1,14 @@
+﻿@{
+    ViewData["Title"] = "Join Course";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Join Course</h1>
+    <form method="post" asp-action="Join">
+        <div class="form-group">
+            <label for="courseCode">Enter Course Code</label>
+            <input type="text" class="form-control" id="courseCode" name="courseCode" placeholder="Course Code" required />
+        </div>
+        <button type="submit" class="btn btn-primary mt-3">Join</button>
+    </form>
+</div>

@@ -1,0 +1,21 @@
+﻿@using Microsoft.AspNetCore.Identity
+@inject UserManager<IdentityUser> UserManager
+@inject SignInManager<IdentityUser> SignInManager
+
+@{
+    ViewData["Title"] = "Home Page";
+    var user = UserManager.GetUserAsync(User).Result;
+    var isTeacher = user != null && UserManager.IsInRoleAsync(user, "Teacher").Result;
+}
+
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+    <div class="mt-4">
+        <a class="btn btn-primary" href="/Home/Join">Join Course</a>
+        @if (isTeacher)
+        {
+            <a class="btn btn-success" href="/Home/Create">Create Course</a>
+        }
+    </div>
+</div>
+
