@@ -18,4 +18,71 @@
         }
     </div>
 </div>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
 
+<div class="container mt-4">
+    <div class="row">
+        @foreach (var course in Model)
+        {
+            <div class="col-md-4 col-lg-3 mb-4">
+                <div class="card course-card text-decoration-none" onclick="location.href='/Course/Details/@course.Id'">
+                    <div class="card-body">
+                        <h5 class="card-title text-white">@course.Name</h5>
+                        <p class="card-subtitle text-white-50 d-flex align-items-center">
+                            Key: <span id="key-@course.Id" class="ms-2">@course.PublicKey</span>
+                            <button class="btn btn-sm btn-light ms-2" onclick="copyKey(event, '@course.Id')">📋</button>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<script>
+    function copyKey(event, courseId) {
+        event.stopPropagation(); 
+
+        var keyElement = document.getElementById("key-" + courseId);
+        var textArea = document.createElement("textarea");
+        textArea.value = keyElement.innerText;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textArea);
+    }
+</script>
+
+<style>
+    .course-card {
+        background: linear-gradient(135deg, #3f51b5, #1a237e);
+        border-radius: 10px;
+        padding: 20px;
+        color: white;
+        display: flex;
+        align-items: center;
+        height: 120px;
+        transition: transform 0.2s, box-shadow 0.2s;
+        cursor: pointer;
+    }
+
+        .course-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .course-card h5 {
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+        }
+
+        .course-card p {
+            font-size: 0.9rem;
+            margin-bottom: 0;
+        }
+
+    .btn-sm {
+        padding: 2px 6px;
+        font-size: 0.8rem;
+    }
+</style>
