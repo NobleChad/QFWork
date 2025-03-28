@@ -1,3 +1,16 @@
-﻿@{
+﻿@model int
+@{
     ViewData["Title"] = "Course Page";
 }
+
+<div class="d-flex gap-3">
+    <a href="/Course/Details/@Model" class="btn btn-success d-flex align-items-center justify-content-center" style="border-radius: 8px; padding: 12px 20px; font-size: 18px; font-weight: 500;">
+        Tasks
+    </a>
+
+    <a href="/Course/Users/@Model" class="btn btn-success d-flex align-items-center justify-content-center" style="border-radius: 8px; padding: 12px 20px; font-size: 18px; font-weight: 500;">
+        Users
+    </a>
+</div>
+
+

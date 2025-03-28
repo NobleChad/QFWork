@@ -127,4 +127,38 @@ public class HomeController : Controller
         _context.SaveChanges();
         return RedirectToAction("Index");
     }
+
+    [HttpPost]
+    public IActionResult Leave(int courseId)
+    {
+        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId))
+        {
+            return Unauthorized("User is not authenticated.");
+        }
+
+        var course = _context.Courses.FirstOrDefault(c => c.Id == courseId);
+        if (course == null)
+        {
+            return NotFound("Course not found.");
+        }
+
+        var userGuid = Guid.Parse(userId);
+
+        if (course.Students.Contains(userGuid))
+        {
+            course.Students.Remove(userGuid);
+        }
+        else if (course.Teachers.Contains(userGuid))
+        {
+            course.Teachers.Remove(userGuid);
+        }
+        else
+        {
+            return BadRequest("User is not enrolled in this course.");
+        }
+
+        _context.SaveChanges();
+        return RedirectToAction("Index");
+    }
 }
