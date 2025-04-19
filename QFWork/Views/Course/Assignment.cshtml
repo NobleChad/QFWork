@@ -1,0 +1,85 @@
+﻿@using System.Security.Claims
+@model Assignment
+
+@{
+    ViewData["Title"] = "Assignment Details";
+    bool isStudent = User.IsInRole("Student");
+    bool isTeacher = User.IsInRole("Teacher");
+    ViewData["Empty"] = true;
+}
+
+<div class="container mt-4">
+    <h2 class="mb-3">@Model.Title</h2>
+
+    <div class="mb-4">
+        <h5 class="text-primary">Description</h5>
+        <p class="form-text">@Model.Description</p>
+    </div>
+
+    <div class="mb-4">
+        <h5 class="text-primary">Due Date</h5>
+        <p>@Model.DueDate.ToString("MMMM dd, yyyy")</p>
+        @{
+            ViewData["Date"] = Model.DueDate;
+        }
+    </div>
+
+    @if (Model.studentSubmissions.Any())
+    {
+        <div class="mb-4">
+            <h4 class="text-success">
+                @(isStudent ? "Your Submission" : "Student Submissions")
+            </h4>
+            <ul class="list-group">
+                @foreach (var submission in Model.studentSubmissions)
+                {
+                    @if ((isStudent && Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value) == submission.StudentId) || !isStudent)
+                    {
+                        ViewData["Empty"] = false;
+                        <li class="list-group-item d-flex flex-column gap-2">
+                            <div>
+                                <a href="@submission.FilePath" target="_blank" class="btn btn-link p-0">View Submission</a>
+                                <small class="text-muted ms-2">Submitted on @submission.SubmittedAt.ToString("MMMM dd, yyyy")</small>
+                                @if (submission.SubmittedAt > (DateTime)ViewData["Date"])
+                                {
+                                    <span class="badge bg-warning text-dark ms-2">Late</span>
+                                }
+                            </div>
+
+                            @if (submission.Grade != null)
+                            {
+                                <div class="text-success fw-bold">Grade: @submission.Grade</div>
+                            }
+
+                            @if (isTeacher)
+                            {
+                                <form method="post" asp-action="SetGrade" class="d-flex align-items-center gap-2 mt-2">
+                                    <input type="hidden" name="submissionId" value="@submission.Id" />
+                                    <input type="hidden" name="assignmentId" value="@Model.AssignmentId" />
+                                    <input type="text" name="grade" class="form-control form-control-sm w-auto" placeholder="Enter grade" />
+                                    <button type="submit" class="btn btn-sm btn-primary">Set Grade</button>
+                                </form>
+                            }
+                        </li>
+                    }
+                }
+            </ul>
+        </div>
+    }
+    else
+    {
+        <p class="text-muted">No submissions yet.</p>
+    }
+
+    @if (isStudent && (bool)ViewData["Empty"] == true)
+    {
+        <div class="mt-4">
+            <h5 class="mb-2">Submit Your Assignment</h5>
+            <form method="post" enctype="multipart/form-data" asp-action="UploadAssignment" class="d-flex flex-column gap-3">
+                <input type="hidden" name="assignmentId" value="@Model.AssignmentId" />
+                <input type="file" name="file" class="form-control" required />
+                <button type="submit" class="btn btn-success">Upload Submission</button>
+            </form>
+        </div>
+    }
+</div>

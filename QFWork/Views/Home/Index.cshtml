@@ -32,13 +32,14 @@
                         </p>
                     </div>
                 </a>
-                <form method="post" action="/Home/Leave">
-                    <input type="hidden" name="courseId" value="@course.Id" />
-                    <button type="submit" class="btn btn-danger mt-2">Leave Course</button>
-                </form>
-                <button class="btn btn-sm btn-light ms-2" onclick="copyKey(event, '@course.Id')">📋</button>
+                <div class="d-flex align-items-center mt-2">
+                    <form method="post" action="/Home/Leave" class="me-2">
+                        <input type="hidden" name="courseId" value="@course.Id" />
+                        <button type="submit" class="btn btn-danger">Leave Course</button>
+                    </form>
+                    <button class="btn btn-sm btn-light" onclick="copyKey(event, '@course.Id')">📋</button>
+                </div>
             </div>
-
         }
     </div>
 </div>

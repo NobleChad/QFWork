@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using QFWork.Data;
 using System.Security.Claims;
+using Azure.Core;
 
 namespace QFWork.Atributes
 {
@@ -16,7 +17,7 @@ namespace QFWork.Atributes
                 return;
             }
 
-            var courseId = context.RouteData.Values["id"]?.ToString();
+            var courseId = context.HttpContext.Request.Cookies["CourseId"] ?? context.RouteData.Values["id"]?.ToString();
             if (courseId == null || !int.TryParse(courseId, out var parsedCourseId))
             {
                 context.Result = new RedirectToActionResult("AccessDenied", "Account", new { area = "Identity" });

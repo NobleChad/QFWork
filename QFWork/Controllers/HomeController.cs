@@ -127,7 +127,6 @@ public class HomeController : Controller
         _context.SaveChanges();
         return RedirectToAction("Index");
     }
-
     [HttpPost]
     public IActionResult Leave(int courseId)
     {

@@ -1,16 +1,44 @@
-﻿@model int
+﻿@using Microsoft.AspNetCore.Identity
+@model List<Assignment>
+@inject UserManager<IdentityUser> UserManager
+@inject SignInManager<IdentityUser> SignInManager
+
 @{
-    ViewData["Title"] = "Course Page";
+    ViewData["Title"] = "Classroom";
+    var user = UserManager.GetUserAsync(User).Result;
+    var isTeacher = user != null && UserManager.IsInRoleAsync(user, "Teacher").Result;
 }
 
-<div class="d-flex gap-3">
-    <a href="/Course/Details/@Model" class="btn btn-success d-flex align-items-center justify-content-center" style="border-radius: 8px; padding: 12px 20px; font-size: 18px; font-weight: 500;">
-        Tasks
-    </a>
+<h2>Classroom</h2>
 
-    <a href="/Course/Users/@Model" class="btn btn-success d-flex align-items-center justify-content-center" style="border-radius: 8px; padding: 12px 20px; font-size: 18px; font-weight: 500;">
-        Users
-    </a>
+<div class="d-flex gap-3 mb-3">
+    <a href="/Course/Users/@ViewData["CourseId"]" class="btn btn-success">Users</a>
+    @if (isTeacher)
+    {
+    <a href="/Course/CreateTask/@ViewData["CourseId"]" class="btn btn-success">Create Task</a>
+    }
 </div>
 
-
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    @foreach (var assignment in Model)
+    {
+        <div class="col">
+            <a href="/Course/Assignment/@assignment.AssignmentId" class="text-decoration-none">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">@assignment.Title</h5>
+                        <p class="card-text text-muted">@assignment.Description</p>
+                        <p class="card-text"><strong>Due:</strong> @assignment.DueDate.ToString("yyyy-MM-dd")</p>
+                    </div>
+                </div>
+            </a>
+            @if (isTeacher)
+            {
+                <form asp-action="RemoveTask" asp-controller="Course" method="post" class="mt-2">
+                    <input type="hidden" name="assignmentId" value="@assignment.AssignmentId" />
+                    <button type="submit" class="btn btn-danger">Remove Task</button>
+                </form>
+            }
+        </div>
+    }
+</div>
