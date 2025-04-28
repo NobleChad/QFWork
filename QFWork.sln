@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.13.35818.85 d17.13
+VisualStudioVersion = 17.13.35818.85
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QFWork", "QFWork\QFWork.csproj", "{B1D1E7FB-2090-4C3E-B5E0-7E1C3FC66B96}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QFWorkTests", "QFWorkTests\QFWorkTests.csproj", "{ABD541CC-B867-4E42-8A7C-E843F57D1B06}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{B1D1E7FB-2090-4C3E-B5E0-7E1C3FC66B96}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B1D1E7FB-2090-4C3E-B5E0-7E1C3FC66B96}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B1D1E7FB-2090-4C3E-B5E0-7E1C3FC66B96}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ABD541CC-B867-4E42-8A7C-E843F57D1B06}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ABD541CC-B867-4E42-8A7C-E843F57D1B06}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ABD541CC-B867-4E42-8A7C-E843F57D1B06}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ABD541CC-B867-4E42-8A7C-E843F57D1B06}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

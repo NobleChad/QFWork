@@ -1,9 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using QFWork.Atributes;
-using QFWork.Data;
 using QFWork.Models;
+using QFWork.Models.Interfaces;
 using System.Security.Claims;
 
 namespace QFWork.Controllers
@@ -12,73 +11,110 @@ namespace QFWork.Controllers
     [UserInCourse]
     public class CourseController : Controller
     {
-        private ApplicationDbContext _context;
-        public CourseController(ApplicationDbContext context)
+        private readonly IUserRepository _userRepository;
+        private readonly ICourseRepository _courseRepository;
+        private readonly IAssignmentRepository _assignmentRepository;
+        private readonly IStudentSubmissionRepository _submissionRepository;
+
+        public CourseController(IUserRepository userRepository,
+            ICourseRepository courseRepository,
+            IAssignmentRepository assignmentRepository,
+            IStudentSubmissionRepository submissionRepository)
         {
-            _context = context;
+            _userRepository = userRepository;
+            _courseRepository = courseRepository;
+            _assignmentRepository = assignmentRepository;
+            _submissionRepository = submissionRepository;
         }
+
         public async Task<IActionResult> Details(int id)
         {
-            var assignments = await _context.Assignments
-                .Where(a => a.CourseId == id)
-                .ToListAsync();
-
+            var assignments = await _assignmentRepository.GetAssignmentsByCourseIdAsync(id);
             ViewData["CourseId"] = id;
             return View(assignments);
         }
+        [HttpGet]
+        public async Task<IActionResult> Users(int id)
+        {
+            var user = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (user == null)
+            {
+                return Unauthorized();
+            }
+            var userId = Guid.Parse(user);
+
+            // Assuming a repository or service exists for accessing courses
+            var course = await _courseRepository.GetCourseByIdAsync(id);
+
+            if (course == null)
+            {
+                return NotFound();
+            }
+
+            // Check if the user is part of the course
+            if (!course.Students.Contains(userId) && !course.Teachers.Contains(userId))
+            {
+                return Unauthorized();
+            }
+
+            // Retrieve users associated with the course
+            var userGuids = course.Students.Concat(course.Teachers).ToList();
+            var users = await _userRepository.GetUsersByIdsAsync(userGuids);
+
+            return View(users);
+        }
+
         [Authorize(Roles = "Teacher")]
         [HttpGet]
-        public IActionResult CreateTask(int id)
-        {
-            return View();
-        }
+        public IActionResult CreateTask(int id) => View();
+
         [Authorize(Roles = "Teacher")]
         [HttpPost]
-        public IActionResult CreateTask(int id, Assignment assignment)
+        public async Task<IActionResult> CreateTask(int id, Assignment assignment)
         {
             assignment.CourseId = id;
             assignment.AssignmentId = 0;
-            _context.Assignments.Add(assignment);
-            _context.SaveChanges();
-            return RedirectToAction("Details", new { id = Request.Cookies["CourseId"] });
+            _assignmentRepository.AddAssignment(assignment);
+            await _assignmentRepository.SaveChangesAsync();
+            return RedirectToAction("Details", new { id });
         }
-        public IActionResult Assignment(int id)
-        {
-            var assignment = _context.Assignments.FirstOrDefault(a => a.AssignmentId == id);
-            assignment.studentSubmissions = _context.StudentSubmissions.Where(x => x.AssignmentId == assignment.AssignmentId).ToList() ?? new List<StudentSubmission>();
 
+        public async Task<IActionResult> Assignment(int id)
+        {
+            var assignment = await _assignmentRepository.GetAssignmentByIdAsync(id);
+            if (assignment == null) return NotFound();
+
+            assignment.studentSubmissions = (await _submissionRepository.GetSubmissionsByAssignmentIdAsync(id)).ToList();
             return View(assignment);
         }
+
         [HttpPost]
-        public IActionResult UploadAssignment(int assignmentId, IFormFile file)
+        public async Task<IActionResult> UploadAssignment(int assignmentId, IFormFile file)
         {
-            if (file != null)
+            if (file == null || Path.GetExtension(file.FileName) != ".txt")
             {
-                var extension = Path.GetExtension(file.FileName);
-                if (extension != ".txt")
-                {
-                    ModelState.AddModelError("File", "Only .txt files are allowed.");
-                    return RedirectToAction("Details", new { id = Request.Cookies["CourseId"] });
-                }
-
-                var filePath = Path.Combine("wwwroot/uploads", file.FileName);
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    file.CopyTo(stream);
-                }
-
-                var submission = new StudentSubmission
-                {
-                    AssignmentId = assignmentId,
-                    StudentId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value),
-                    FilePath = "/uploads/" + file.FileName,
-                    SubmittedAt = DateTime.Now,
-                    Grade = "Pending"
-                };
-
-                _context.StudentSubmissions.Add(submission);
-                _context.SaveChanges();
+                ModelState.AddModelError("File", "Only .txt files are allowed.");
+                return RedirectToAction("Details", new { id = Request.Cookies["CourseId"] });
             }
+
+            var uploadsPath = Path.Combine("wwwroot/uploads");
+            Directory.CreateDirectory(uploadsPath);
+            var filePath = Path.Combine(uploadsPath, file.FileName);
+
+            using var stream = new FileStream(filePath, FileMode.Create);
+            await file.CopyToAsync(stream);
+
+            var submission = new StudentSubmission
+            {
+                AssignmentId = assignmentId,
+                StudentId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value),
+                FilePath = "/uploads/" + file.FileName,
+                SubmittedAt = DateTime.UtcNow,
+                Grade = "Pending"
+            };
+
+            _submissionRepository.AddSubmission(submission);
+            await _submissionRepository.SaveChangesAsync();
 
             return RedirectToAction("Details", new { id = Request.Cookies["CourseId"] });
         }
@@ -87,60 +123,23 @@ namespace QFWork.Controllers
         [Authorize(Roles = "Teacher")]
         public async Task<IActionResult> SetGrade(int submissionId, int assignmentId, string grade)
         {
-            var submission = await _context.StudentSubmissions
-                .FirstOrDefaultAsync(s => s.Id == submissionId);
-
-            if (submission == null)
-            {
-                return NotFound();
-            }
+            var submission = await _submissionRepository.GetSubmissionByIdAsync(submissionId);
+            if (submission == null) return NotFound();
 
             submission.Grade = grade;
-
-            await _context.SaveChangesAsync();
+            await _submissionRepository.SaveChangesAsync();
 
             return RedirectToAction("Assignment", new { id = assignmentId });
         }
-        public IActionResult Users(int id)
-        {
-            var user = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (user == null)
-            {
-                return Unauthorized();
-            }
 
-            var userId = Guid.Parse(user);
-
-            var course = _context.Set<Course>().FirstOrDefault(c => c.Id == id);
-
-            if (course == null)
-            {
-                return NotFound();
-            }
-
-            if (!course.Students.Contains(userId) && !course.Teachers.Contains(userId))
-            {
-                return Unauthorized();
-            }
-
-            var userGuids = course.Students.Concat(course.Teachers).ToList();
-            var users = _context.Users
-                        .AsEnumerable()
-                        .Where(u => userGuids.Contains(Guid.Parse(u.Id)))
-                        .ToList();
-            return View(users);
-        }
         [HttpPost]
-        public IActionResult RemoveTask(int assignmentId)
+        public async Task<IActionResult> RemoveTask(int assignmentId)
         {
-            var assignment = _context.Assignments.FirstOrDefault(a => a.AssignmentId == assignmentId);
-            if (assignment == null)
-            {
-                return NotFound();
-            }
+            var assignment = await _assignmentRepository.GetAssignmentByIdAsync(assignmentId);
+            if (assignment == null) return NotFound();
 
-            _context.Assignments.Remove(assignment);
-            _context.SaveChanges();
+            _assignmentRepository.RemoveAssignment(assignment);
+            await _assignmentRepository.SaveChangesAsync();
 
             return RedirectToAction("Details", new { id = assignment.CourseId });
         }
